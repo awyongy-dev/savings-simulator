@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Strategic Savings Simulator</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #020617;
+            color: #f1f5f9;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .dashboard-card {
+            max-width: 850px;
+            width: 100%;
+            background-color: #0f172a;
+            border-radius: 28px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            border: 1px solid #1e293b;
+            padding: 32px;
+        }
+        .text-center { text-align: center; }
+        .mb-4 { margin-bottom: 16px; }
+        .mb-8 { margin-bottom: 32px; }
+        .badge { color: #34d399; font-weight: 600; text-transform: uppercase; font-size: 13px; letter-spacing: 1.5px; display: block; margin-bottom: 10px; }
+        h1 { font-size: 32px; font-weight: 900; color: #fff; letter-spacing: -0.5px; margin-bottom: 12px; line-height: 1.2; }
+        h1 span { color: #34d399; }
+        .subtitle { color: #94a3b8; font-size: 17px; line-height: 1.5; }
+        .underline-green { color: #34d399; font-weight: 700; text-decoration: underline; text-decoration-thickness: 2px; }
+        .toggle-container { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 440px; margin: 32px auto; background-color: #020617; padding: 6px; border-radius: 16px; border: 1px solid #1e293b; }
+        .btn { padding: 14px; border-radius: 12px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; transition: all .3s ease; text-align: center; }
+        .btn-active { background-color: #10b981; color: #020617; box-shadow: 0 0 15px rgba(16,185,129,0.35); }
+        .btn-inactive { background-color: transparent; color: #94a3b8; }
+        .btn-inactive:hover { color: #fff; }
+        .display-arena { background-color: #020617; border: 1px solid #1e293b; border-radius: 20px; padding: 24px; min-height: 380px; display: flex; flex-direction: column; justify-content: space-between; }
+        .stage-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; transition: color .3s ease; }
+        .title-trap { color: #f59e0b; }
+        .title-seq { color: #34d399; }
+        .stage-desc { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
+        .bars-grid { margin: auto 0; }
+        .bar-row { transition: all .4s ease-in-out; margin-bottom: 18px; }
+        .bar-label-strip { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
+        .bar-track { width: 100%; background-color: #0f172a; border: 1px solid transparent; border-radius: 9999px; padding: 3px; transition: all .3s ease; }
+        .bar-fill { height: 10px; border-radius: 9999px; transition: width .7s cubic-bezier(0.4, 0, 0.2, 1); }
+        .glow-track { border-color: rgba(52, 211, 153, 0.4); box-shadow: 0 0 12px rgba(52, 211, 153, 0.15); }
+        .dimmed { opacity: .3; transform: scale(0.99); }
+        .takeaway-strip { border-top: 1px solid #1e293b; padding-top: 20px; margin-top: 24px; text-align: center; }
+        .takeaway-tag { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #64748b; font-weight: 700; display: block; margin-bottom: 4px; }
+        .takeaway-quote { color: #e2e8f0; font-style: italic; font-size: 14px; font-weight: 500; }
+        .slider-panel { margin-top: 32px; background-color: #020617; border: 1px solid #1e293b; border-radius: 20px; padding: 20px; }
+        .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .slider-title { font-size: 14px; font-weight: 700; color: #94a3b8; }
+        .slider-value-display { font-size: 20px; font-weight: 800; color: #34d399; }
+        .slider-wrapper { display: flex; align-items: center; }
+        .custom-slider { flex-grow: 1; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 9999px; background: #1e293b; outline: none; cursor: pointer; }
+        .custom-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px rgba(16,185,129,0.5); cursor: pointer; transition: transform .1s; }
+        .custom-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+        .footer-banner { margin-top: 32px; background: linear-gradient(to right, #064e3b, #0f172a); border: 1px solid rgba(16,185,129,0.2); border-radius: 20px; padding: 20px; text-align: center; }
+        .footer-banner p { color: #a7f3d0; font-weight: 700; font-size: 15px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-card">
+        <div class="text-center mb-8">
+            <span class="badge">Interactive Financial Strategy</span>
+            <h1>You’re <span>Not Bad</span> at Saving.</h1>
+            <p class="subtitle">You just have too many goals competing for the <span class="underline-green">same dollar</span>.</p>
+        </div>
+        <div class="toggle-container">
+            <button id="btn-trap" class="btn btn-active" onclick="switchParadigm('trap')">⚠️ Split Focus Trap</button>
+            <button id="btn-sequential" class="btn btn-inactive" onclick="switchParadigm('sequential')">⚡ 3-Month Priority</button>
+        </div>
+        <div class="display-arena">
+            <div class="mb-4">
+                <h3 id="paradigm-title" class="stage-title title-trap">The Fragmented Squeeze</h3>
+                <p id="paradigm-desc" class="stage-desc">When you try to fund all 6 goals at the exact same time on a single salary, progress slows to a crawl. You save a little for one, and then another gets pushed back indefinitely.</p>
+            </div>
+            <div id="paradigm-container" class="bars-grid"></div>
+            <div class="takeaway-strip">
+                <span class="takeaway-tag">The Critical Shift</span>
+                <p id="paradigm-takeaway" class="takeaway-quote">"Stop asking 'How do I save more?' That leads to restriction, guilt, and burnout."</p>
+            </div>
+        </div>
+        <div class="slider-panel">
+            <div class="slider-header">
+                <span class="slider-title">Monthly Available Cash Flow</span>
+                <div id="cash-value" class="slider-value-display">$500/mo</div>
+            </div>
+            <div class="slider-wrapper">
+                <input type="range" id="cash-slider" class="custom-slider" min="100" max="2500" step="50" value="500" oninput="updateSimulationEngine()">
+            </div>
+        </div>
+        <div class="footer-banner">
+            <p>"You don’t have to choose between living today and preparing for tomorrow.<br>You just need to make sure today doesn’t cost you your future."</p>
+        </div>
+    </div>
+    <script>
+        let selectedStrategy = "trap";
+        const goals = [
+            { id: 1, name: "🚨 3-Month Emergency Fund", target: 5000, color: "#34d399" },
+            { id: 2, name: "🏠 Home Downpayment", target: 15000, color: "#10b981" },
+            { id: 3, name: "✈️ Travel & Vacation", target: 3000, color: "#059669" },
+            { id: 4, name: "👪 Supporting Parents", target: 4000, color: "#047857" },
+            { id: 5, name: "📈 Wealth Investments", target: 8000, color: "#065f46" },
+            { id: 6, name: "👵 Long-term Retirement", target: 20000, color: "#064e3b" }
+        ];
+        function renderParadigm() {
+            const container = document.getElementById("paradigm-container");
+            container.innerHTML = "";
+            const isTrap = selectedStrategy === "trap";
+            const cashFlow = parseInt(document.getElementById("cash-slider").value);
+            let remainingCash = cashFlow;
+            goals.forEach(goal => {
+                let fillPct = 0;
+                let statusText = "";
+                let rowClass = "bar-row";
+                let trackClass = "bar-track";
+                let labelStyle = "color: #94a3b8;";
+                if (isTrap) {
+                    fillPct = 16.6;
+                    const months = (goal.target / (cashFlow / 6)).toFixed(1);
+                    statusText = `$${(cashFlow / 6).toFixed(0)}/mo (${months} mos)`;
+                } else {
+                    if (remainingCash > 0) {
+                        if (remainingCash >= goal.target) {
+                            fillPct = 100;
+                            statusText = "FULLY FUNDED 🚀";
+                            remainingCash -= goal.target;
+                        } else {
+                            fillPct = ((remainingCash / goal.target) * 100).toFixed(0);
+                            const monthsLeft = ((goal.target - remainingCash) / remainingCash).toFixed(1);
+                            statusText = `$${remainingCash}/mo (${monthsLeft} mos left)`;
+                            remainingCash = 0;
+                            trackClass += " glow-track";
+                            labelStyle = "color: #34d399; font-weight: bold;";
+                        }
+                    } else {
+                        fillPct = 0;
+                        statusText = "In Queue (Waiting 🕒)";
+                        rowClass += " dimmed";
+                    }
+                }
+                const markup = `<div class="${rowClass}"><div class="bar-label-strip"><span>${goal.name}</span><span style="${labelStyle}">${statusText}</span></div><div class="${trackClass}"><div class="bar-fill" style="width: ${fillPct}%; background-color: ${goal.color};"></div></div></div>`;
+                container.insertAdjacentHTML("beforeend", markup);
+            });
+        }
+        function switchParadigm(mode) {
+            selectedStrategy = mode;
+            const btnTrap = document.getElementById("btn-trap");
+            const btnSeq = document.getElementById("btn-sequential");
+            const title = document.getElementById("paradigm-title");
+            const desc = document.getElementById("paradigm-desc");
+            const takeaway = document.getElementById("paradigm-takeaway");
+            if (mode === "trap") {
+                btnTrap.className = "btn btn-active";
+                btnSeq.className = "btn btn-inactive";
+                title.textContent = "The Fragmented Squeeze";
+                title.className = "stage-title title-trap";
+                desc.textContent = "When you try to fund all 6 goals at the exact same time on a single salary, progress slows to a crawl. You save a little for one, and then another gets pushed back indefinitely.";
+                takeaway.textContent = `"Stop asking 'How do I save more?' That leads to restriction, guilt, and burnout."`;
+            } else {
+                btnSeq.className = "btn btn-active";
+                btnTrap.className = "btn btn-inactive";
+                title.textContent = "The Sequential Strategy";
+                title.className = "stage-title title-seq";
+                desc.textContent = "Funneling your full financial power into locking in your 3-Month Emergency Fund first creates momentum. Once secure, you gain the clarity to crush the remaining goals one by one.";
+                takeaway.textContent = `"Start asking 'What should come first?' Sequential priority builds instant psychological momentum."`;
+            }
+            updateSimulationEngine();
+        }
+        function updateSimulationEngine() {
+            const value = parseInt(document.getElementById("cash-slider").value);
+            document.getElementById("cash-value").textContent = `$${value}/mo`;
+            renderParadigm();
+        }
+        window.onload = function() {
+            updateSimulationEngine();
+        };
+    </script>
+</body>
+</html>
